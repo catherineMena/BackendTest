@@ -13,7 +13,7 @@ const cinemaRoutes = require("./routes/cinema.routes")
 const reservationRoutes = require("./routes/reservation.routes")
 
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 4000
 
 // Configuración de multer para carga de archivos
 const storage = multer.memoryStorage()

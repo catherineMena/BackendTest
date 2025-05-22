@@ -237,51 +237,43 @@ const createCinemaRoom = async (req, res) => {
 const updateCinemaRoomMovie = async (req, res) => {
   try {
     const { id } = req.params
-    const { name, movieTitle } = req.body
-    let moviePoster = ""
+    const { name, movieTitle, moviePoster } = req.body
+    let finalPoster = ""
 
-    // Obtener la información actual de la sala
+    // Verificar si la sala existe
     const [rooms] = await pool.query("SELECT * FROM cinema_rooms WHERE id = ?", [id])
-
     if (rooms.length === 0) {
       return res.status(404).json({ message: "Sala de cine no encontrada" })
     }
 
-    // Manejar la carga de la imagen del póster
+    // Procesar imagen si se manda como archivo
     if (req.file) {
       const uploadDir = path.join(__dirname, "../uploads")
-
-      // Crear directorio si no existe
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true })
       }
-
       const fileExtension = path.extname(req.file.originalname)
       const fileName = `${uuidv4()}${fileExtension}`
       const filePath = path.join(uploadDir, fileName)
-
       fs.writeFileSync(filePath, req.file.buffer)
-      moviePoster = `/uploads/${fileName}`
-    } else if (req.body.moviePoster) {
-      moviePoster = req.body.moviePoster
+      finalPoster = `/uploads/${fileName}`
+    } else if (moviePoster) {
+      finalPoster = moviePoster
     } else {
-      // Mantener el póster actual si no se proporciona uno nuevo
-      moviePoster = rooms[0].movie_poster
+      finalPoster = rooms[0].movie_poster
     }
 
-    // Actualizar la información de la película
-    await pool.query("UPDATE cinema_rooms SET name = ?, movie_title = ?, movie_poster = ? WHERE id = ?", [
-      name,
-      movieTitle,
-      moviePoster,
-      id,
-    ])
+    // Actualizar
+    await pool.query(
+      "UPDATE cinema_rooms SET name = ?, movie_title = ?, movie_poster = ? WHERE id = ?",
+      [name, movieTitle, finalPoster, id]
+    )
 
     res.status(200).json({
-      id: Number.parseInt(id),
+      id: Number(id),
       name,
       movie_title: movieTitle,
-      movie_poster: moviePoster,
+      movie_poster: finalPoster,
     })
   } catch (error) {
     console.error("Error al actualizar información de película:", error)
@@ -289,43 +281,54 @@ const updateCinemaRoomMovie = async (req, res) => {
   }
 }
 
+
 // Función para actualizar la capacidad de una sala
 const updateCinemaRoomCapacity = async (req, res) => {
   try {
-    const { id } = req.params
-    const { rows, columns } = req.body
+    const { id } = req.params;
+    const { rows, columns } = req.body;
+
+    // Validación mejorada
+    if (rows == null || columns == null) {
+      return res.status(400).json({ message: "Faltan filas o columnas" });
+    }
 
     // Verificar si la sala existe
-    const [rooms] = await pool.query("SELECT * FROM cinema_rooms WHERE id = ?", [id])
+    const [rooms] = await pool.query("SELECT * FROM cinema_rooms WHERE id = ?", [id]);
 
     if (rooms.length === 0) {
-      return res.status(404).json({ message: "Sala de cine no encontrada" })
+      return res.status(404).json({ message: "Sala de cine no encontrada" });
     }
 
     // Verificar si hay reservaciones para esta sala
-    const [reservations] = await pool.query("SELECT * FROM reservations WHERE cinema_room_id = ?", [id])
+    const [reservations] = await pool.query("SELECT * FROM reservations WHERE cinema_room_id = ?", [id]);
 
     if (reservations.length > 0) {
-      return res.status(400).json({ message: "No se puede modificar la capacidad porque hay reservaciones activas" })
+      return res
+        .status(400)
+        .json({ message: "No se puede modificar la capacidad porque hay reservaciones activas" });
     }
 
     // Actualizar la capacidad
-    await pool.query("UPDATE cinema_rooms SET `rows` = ?, `columns` = ? WHERE id = ?", [
-      Number.parseInt(rows),
-      Number.parseInt(columns),
-      id,
-    ])
+
+console.log("Datos recibidos para actualizar:", { name, movieTitle, moviePoster })
+
+    await pool.query(
+      "UPDATE cinema_rooms SET `rows` = ?, `columns` = ? WHERE id = ?",
+      [Number(rows), Number(columns), id]
+    );
 
     res.status(200).json({
-      id: Number.parseInt(id),
-      rows: Number.parseInt(rows),
-      columns: Number.parseInt(columns),
-    })
+      id: Number(id),
+      rows: Number(rows),
+      columns: Number(columns),
+    });
   } catch (error) {
-    console.error("Error al actualizar capacidad de sala:", error)
-    res.status(500).json({ message: "Error al actualizar capacidad de sala" })
+    console.error("Error al actualizar capacidad de sala:", error);
+    res.status(500).json({ message: "Error al actualizar capacidad de sala" });
   }
-}
+};
+
 
 module.exports = {
   createCinemaRoom,

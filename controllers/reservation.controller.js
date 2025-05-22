@@ -6,9 +6,21 @@ const { v4: uuidv4 } = require("uuid")
 
 // Crear una nueva reservación
 const createReservation = async (req, res) => {
+  console.log("📥 Body recibido en backend:", req.body)
+
   try {
     const { cinemaRoomId, reservationDate, seats } = req.body
     const userId = req.user.id
+
+console.log("🎯 Tipos recibidos:", {
+  cinemaRoomId,
+  reservationDate,
+  seats,
+  seatsType: typeof seats,
+  seatsLength: seats?.length
+})
+
+
 
     // Validar datos
     if (!cinemaRoomId || !reservationDate || !seats || !seats.length) {

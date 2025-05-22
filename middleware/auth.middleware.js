@@ -11,12 +11,14 @@ const verifyToken = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "cinema_secret_key")
+    console.log("🔐 Token decodificado:", decoded) // ✅ Esto sí está bien
     req.user = decoded
     next()
   } catch (error) {
     return res.status(401).json({ message: "Token inválido o expirado" })
   }
 }
+
 
 // Middleware para verificar rol de administrador
 const isAdmin = (req, res, next) => {
